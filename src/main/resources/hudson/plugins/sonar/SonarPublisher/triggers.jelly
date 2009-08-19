@@ -15,4 +15,9 @@
     <f:textbox name="envVar" value="${it.getEnvVar()}"/>
   </f:entry>
 
+  <f:entry title="${%SkipTimeout}" help="/plugin/sonar/help-trigger-timeout.html">
+    <f:textbox name="skipTimeout" value="${it.getSkipTimeout()}" 
+    			default="0"/>
+  </f:entry>
+
 </j:jelly>

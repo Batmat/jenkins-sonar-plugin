@@ -16,9 +16,11 @@
 package hudson.plugins.sonar.model;
 
 import hudson.Util;
+import hudson.model.BuildBadgeAction;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+import hudson.plugins.sonar.BuildSonarAction;
 import hudson.plugins.sonar.Messages;
 import hudson.triggers.SCMTrigger;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -43,14 +45,38 @@ public class TriggersConfig implements Serializable {
    */
   private String envVar;
 
+  /**
+   * @since 1.9-SNAPSHOT
+   */
+  private String skipTimeout;
+
+  public String getSkipTimeout() {
+    return skipTimeout;
+  }
+
+  public void setSkipTimeout(String skipTimeout) {
+    this.skipTimeout = skipTimeout;
+  }
+
   public TriggersConfig() {
   }
 
   @DataBoundConstructor
-  public TriggersConfig(boolean skipScmCause, boolean skipUpstreamCause, String envVar) {
+  public TriggersConfig(boolean skipScmCause, boolean skipUpstreamCause, String envVar, String skipTimeout) {
     this.skipScmCause = skipScmCause;
     this.skipUpstreamCause = skipUpstreamCause;
     this.envVar = envVar;
+    // TODO : form validation
+    // https://wiki.jenkins-ci.org/display/JENKINS/Basic+guide+to+Jelly+usage+in+Jenkins#BasicguidetoJellyusageinJenkins-Formvalidation
+    this.skipTimeout = skipTimeout;
+  }
+
+  private long toLong(String skipTimeoutString) {
+    try {
+      return Long.parseLong(skipTimeoutString);
+    } catch (NumberFormatException e) {
+      return 0L;
+    }
   }
 
   public boolean isSkipScmCause() {
@@ -77,9 +103,18 @@ public class TriggersConfig implements Serializable {
     this.envVar = envVar;
   }
 
+  public long getSkipTimeoutInMillis() {
+    return toLong(skipTimeout) * 60 * 1000;
+  }
+
   public String isSkipSonar(AbstractBuild<?, ?> build) {
     Result result = build.getResult();
 
+    long lastBuildInMillis = getLastSonarBuildTimeInMillis(build);
+    long elapsed = System.currentTimeMillis() - lastBuildInMillis;
+    if (elapsed < getSkipTimeoutInMillis()) {
+      return Messages.SonarPublisher_TimeoutNotElapsed(millisToHumanReadable(elapsed), millisToHumanReadable(getSkipTimeoutInMillis()));
+    }
     if (result != null) {
       // skip analysis if build failed
       // unstable means that build completed, but there were some test failures, which is not critical for analysis
@@ -108,6 +143,27 @@ public class TriggersConfig implements Serializable {
       }
     }
     return causes.isEmpty() ? Messages.Skipping_Sonar_analysis() : null;
+  }
+
+  /**
+   * @param build the build to analyze.
+   * @return 0 if no previous sonar build was found.
+   */
+  private long getLastSonarBuildTimeInMillis(AbstractBuild<?, ?> build) {
+    AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
+    if (previousBuild != null) {
+      for (BuildBadgeAction buildBadgeAction : build.getPreviousBuild().getBadgeActions()) {
+        if (BuildSonarAction.class.getName().equals(buildBadgeAction.getClass().getName())) {
+          return previousBuild.getTimeInMillis();
+        }
+      }
+      return getLastSonarBuildTimeInMillis(previousBuild);
+    }
+    return 0;
+  }
+
+  private Object millisToHumanReadable(long elapsed) {
+    return elapsed / 1000 + " s";
   }
 
   /**

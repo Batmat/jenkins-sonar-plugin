@@ -127,25 +127,4 @@ public class TriggersConfigTest {
     when(build.getCauses()).thenReturn(Arrays.asList(causes));
     return build;
   }
-
-  // FIXME : Forced to disable that test :-(. I would need to mock getTimeInMillis(), but it's unfortunately final
-  // and mockito can't mock it.
-  // @Test
-  // public void with_timeout_and_previous_builds() {
-  // AbstractBuild build = mockBuildWithPreviousOne(SCM_CAUSE);
-  // assertThat(triggers.isSkipSonar(build)).isNull();
-  // triggers.setSkipTimeout("1");
-  // assertThat(triggers.isSkipSonar(build)).isNotNull();
-  // }
-  //  
-  // private static AbstractBuild mockBuildWithPreviousOne(Cause... causes) {
-  // AbstractBuild build = mockBuildWithCauses(causes);
-  // AbstractBuild previousBuild = mockBuildWithCauses(causes);
-  //
-  // when(build.getPreviousBuild()).thenReturn(previousBuild);
-  // when(previousBuild.getPreviousBuild()).thenReturn(null);
-  // when(previousBuild.getBadgeActions()).thenReturn(Arrays.asList(new BuildSonarAction[]{new BuildSonarAction()}));
-  // when(previousBuild.getTimeInMillis()).thenReturn(System.currentTimeMillis()-120000);
-  // return build;
-  // }
 }

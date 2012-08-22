@@ -421,6 +421,21 @@ public class SonarPublisher extends Notifier {
           FormValidation.error(Messages.SonarPublisher_MandatoryPropertySpaces()) : FormValidation.ok();
     }
 
+    public FormValidation doCheckSkipTimeout(@QueryParameter String value) {
+      try {
+        int number = Integer.parseInt(value);
+        if (number < 0) {
+          return FormValidation.error(Messages.SonarPublisher_SkipTimeoutMustBePositive());
+        }
+        if (number > 60 * 24 * 90) {
+          return FormValidation.warning(Messages.SonarPublisher_SkipTimeoutTooBig());
+        }
+      } catch (NumberFormatException nfe) {
+        return FormValidation.error(Messages.SonarPublisher_SkipTimeoutMustBePositive());
+      }
+      return FormValidation.ok();
+    }
+
     @Override
     public boolean isApplicable(Class<? extends AbstractProject> jobType) {
       // eventually check if job type of FreeStyleProject.class || MavenModuleSet.class

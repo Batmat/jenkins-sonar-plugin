@@ -16,8 +16,8 @@
   </f:entry>
 
   <f:entry title="${%SkipTimeout}" help="/plugin/sonar/help-trigger-timeout.html">
-    <f:textbox name="skipTimeout" value="${it.getSkipTimeout()}" 
-    			default="0"/>
+    <f:textbox name="skipTimeout" value="${it.getSkipTimeout()}"
+    			checkUrl="'${rootURL}/publisher/SonarPublisher/checkSkipTimeout?value='+escape(this.value)"/>
   </f:entry>
 
 </j:jelly>
